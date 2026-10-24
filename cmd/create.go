@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -16,7 +15,6 @@ type ProjectType string
 
 const (
 	WebApp   ProjectType = "web app"
-	CLI      ProjectType = "cli"
 	LowLevel ProjectType = "low level"
 )
 
@@ -48,7 +46,6 @@ var createCmd = &cobra.Command{
 					Title("Project type").
 					Options(
 						huh.NewOption("Web app", WebApp),
-						huh.NewOption("CLI", CLI),
 						huh.NewOption("Low level", LowLevel),
 					).
 					Value(&p.Type),
@@ -59,14 +56,10 @@ var createCmd = &cobra.Command{
 			return err
 		}
 
-		switch p.Type {
-		case WebApp:
+		if p.Type == WebApp {
 			return createWebApp(p.Name)
-		case LowLevel:
-			return createLowLevel(p.Name)
-		default:
-			return fmt.Errorf("%s projects are not supported yet", p.Type)
 		}
+		return createLowLevel(p.Name)
 	},
 }
 
