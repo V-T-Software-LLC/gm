@@ -1,0 +1,16 @@
+package views
+
+import "{{.Module}}/internal/db"
+
+templ Dashboard(user db.User) {
+	@Layout("Dashboard") {
+		<main class="mx-auto max-w-2xl p-8">
+			<div class="flex items-center justify-between">
+				<h1 class="text-3xl font-bold">Dashboard</h1>
+				<button hx-post="/signout" class="text-sm text-blue-600 hover:underline">Sign out</button>
+			</div>
+			<p class="mt-4">Welcome, { user.FirstName } { user.LastName }.</p>
+			<p class="text-sm text-gray-600">Signed in as { user.Email }</p>
+		</main>
+	}
+}

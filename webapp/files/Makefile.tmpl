@@ -1,7 +1,11 @@
 NAME := {{.Name}}
 PM := {{.PackageManager}}
 
-.PHONY: build generate web sqlc run dev dev-go dev-web clean
+# load DATABASE_URL and REDIS_URL, see .env.example
+-include .env
+export
+
+.PHONY: build generate web sqlc db run dev dev-go dev-web clean
 
 build: generate web
 	go build -o bin/$(NAME) ./cmd/$(NAME)
@@ -14,6 +18,9 @@ web:
 
 sqlc:
 	sqlc generate
+
+db:
+	psql "$(DATABASE_URL)" -f internal/db/schema.sql
 
 run: build
 	./bin/$(NAME)

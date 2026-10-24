@@ -16,8 +16,9 @@ var rootCmd = &cobra.Command{
 	Long: `gm scaffolds new projects. Run gm create and answer the prompts.
 
 Project types:
-  web app    go server with echo, templ, and sqlc, and a vite svelte app
-             with tailwind for dynamic components
+  web app    go server with echo, templ, htmx, and sqlc, user sign up and
+             sign in with sessions in redis, and a vite svelte app with
+             tailwind for dynamic components
   low level  C or C++ library or application built with CMake, or C with
              a basic Makefile`,
 	// Uncomment the following line if your bare application

@@ -2,14 +2,24 @@ package server
 
 import (
 	"github.com/a-h/templ"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
+	"github.com/redis/go-redis/v9"
 
+	"{{.Module}}/internal/db"
 	"{{.Module}}/web/views"
 )
 
-func New(dev bool) *echo.Echo {
+type server struct {
+	dev      bool
+	queries  *db.Queries
+	sessions *sessions
+}
+
+func New(dev bool, pool *pgxpool.Pool, rdb *redis.Client) *echo.Echo {
 	views.Dev = dev
+	s := &server{dev: dev, queries: db.New(pool), sessions: &sessions{rdb: rdb}}
 
 	e := echo.New()
 	e.Use(middleware.RequestLogger())
@@ -19,6 +29,16 @@ func New(dev bool) *echo.Echo {
 	e.GET("/", func(c *echo.Context) error {
 		return render(c, views.Home())
 	})
+	e.GET("/signup", func(c *echo.Context) error {
+		return render(c, views.SignUp())
+	})
+	e.POST("/signup", s.signUp)
+	e.GET("/signin", func(c *echo.Context) error {
+		return render(c, views.SignIn())
+	})
+	e.POST("/signin", s.signIn)
+	e.POST("/signout", s.signOut)
+	e.GET("/dashboard", s.dashboard, s.requireUser)
 
 	return e
 }

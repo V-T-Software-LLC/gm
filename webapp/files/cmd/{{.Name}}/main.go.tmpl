@@ -1,8 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"log/slog"
+	"os"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 
 	"{{.Module}}/internal/server"
 )
@@ -11,8 +17,33 @@ func main() {
 	dev := flag.Bool("dev", false, "load scripts from the vite dev server")
 	flag.Parse()
 
-	e := server.New(*dev)
-	if err := e.Start(":8080"); err != nil {
+	if err := run(*dev); err != nil {
 		slog.Error("failed to start server", "error", err)
+		os.Exit(1)
 	}
+}
+
+func run(dev bool) error {
+	ctx := context.Background()
+
+	pool, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return fmt.Errorf("parsing DATABASE_URL: %w", err)
+	}
+	defer pool.Close()
+	if err := pool.Ping(ctx); err != nil {
+		return fmt.Errorf("connecting to postgres: %w", err)
+	}
+
+	opts, err := redis.ParseURL(os.Getenv("REDIS_URL"))
+	if err != nil {
+		return fmt.Errorf("parsing REDIS_URL: %w", err)
+	}
+	rdb := redis.NewClient(opts)
+	defer rdb.Close()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return fmt.Errorf("connecting to redis: %w", err)
+	}
+
+	return server.New(dev, pool, rdb).Start(":8080")
 }

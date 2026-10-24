@@ -1,0 +1,136 @@
+package server
+
+import (
+	"errors"
+	"net/http"
+	"strings"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/labstack/echo/v5"
+	"golang.org/x/crypto/bcrypt"
+
+	"{{.Module}}/internal/db"
+	"{{.Module}}/web/views"
+)
+
+// Forms post with htmx. Errors re-render the form with a 200 so htmx swaps it
+// in, and success sends HX-Redirect so the browser loads the dashboard.
+
+func (s *server) signUp(c *echo.Context) error {
+	f := views.SignUpData{
+		FirstName: strings.TrimSpace(c.FormValue("first_name")),
+		LastName:  strings.TrimSpace(c.FormValue("last_name")),
+		Email:     strings.ToLower(strings.TrimSpace(c.FormValue("email"))),
+	}
+	password := c.FormValue("password")
+
+	switch {
+	case f.FirstName == "" || f.LastName == "" || f.Email == "":
+		f.Error = "All fields are required."
+	case !strings.Contains(f.Email, "@"):
+		f.Error = "Enter a valid email address."
+	case len(password) < 8 || len(password) > 72:
+		f.Error = "Password must be between 8 and 72 characters."
+	}
+	if f.Error != "" {
+		return render(c, views.SignUpForm(f))
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user, err := s.queries.CreateUser(c.Request().Context(), db.CreateUserParams{
+		FirstName:    f.FirstName,
+		LastName:     f.LastName,
+		Email:        f.Email,
+		PasswordHash: string(hash),
+	})
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		f.Error = "An account with that email already exists."
+		return render(c, views.SignUpForm(f))
+	}
+	if err != nil {
+		return err
+	}
+	return s.startSession(c, user.ID)
+}
+
+func (s *server) signIn(c *echo.Context) error {
+	f := views.SignInData{Email: strings.ToLower(strings.TrimSpace(c.FormValue("email")))}
+
+	user, err := s.queries.GetUserByEmail(c.Request().Context(), f.Email)
+	if errors.Is(err, pgx.ErrNoRows) {
+		f.Error = "Invalid email or password."
+		return render(c, views.SignInForm(f))
+	}
+	if err != nil {
+		return err
+	}
+	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(c.FormValue("password"))) != nil {
+		f.Error = "Invalid email or password."
+		return render(c, views.SignInForm(f))
+	}
+	return s.startSession(c, user.ID)
+}
+
+func (s *server) signOut(c *echo.Context) error {
+	if cookie, err := c.Cookie(sessionCookie); err == nil {
+		if err := s.sessions.delete(c.Request().Context(), cookie.Value); err != nil {
+			return err
+		}
+	}
+	s.setSessionCookie(c, "", -1)
+	c.Response().Header().Set("HX-Redirect", "/signin")
+	return c.NoContent(http.StatusOK)
+}
+
+func (s *server) dashboard(c *echo.Context) error {
+	return render(c, views.Dashboard(c.Get("user").(db.User)))
+}
+
+// requireUser loads the signed in user into the context as "user", or
+// redirects to the sign in page.
+func (s *server) requireUser(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c *echo.Context) error {
+		cookie, err := c.Cookie(sessionCookie)
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/signin")
+		}
+		ctx := c.Request().Context()
+		id, err := s.sessions.get(ctx, cookie.Value)
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/signin")
+		}
+		user, err := s.queries.GetUser(ctx, id)
+		if err != nil {
+			return c.Redirect(http.StatusSeeOther, "/signin")
+		}
+		c.Set("user", user)
+		return next(c)
+	}
+}
+
+func (s *server) startSession(c *echo.Context, userID int64) error {
+	token, err := s.sessions.create(c.Request().Context(), userID)
+	if err != nil {
+		return err
+	}
+	s.setSessionCookie(c, token, int(sessionTTL.Seconds()))
+	c.Response().Header().Set("HX-Redirect", "/dashboard")
+	return c.NoContent(http.StatusOK)
+}
+
+func (s *server) setSessionCookie(c *echo.Context, token string, maxAge int) {
+	c.SetCookie(&http.Cookie{
+		Name:     sessionCookie,
+		Value:    token,
+		Path:     "/",
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		Secure:   !s.dev,
+		SameSite: http.SameSiteLaxMode,
+	})
+}

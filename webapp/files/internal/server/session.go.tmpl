@@ -1,0 +1,37 @@
+package server
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+)
+
+const (
+	sessionCookie = "session"
+	sessionTTL    = 30 * 24 * time.Hour
+)
+
+// sessions maps a random token, stored in the session cookie, to a user id.
+type sessions struct {
+	rdb *redis.Client
+}
+
+func (s *sessions) create(ctx context.Context, userID int64) (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	token := base64.RawURLEncoding.EncodeToString(b)
+	return token, s.rdb.Set(ctx, "session:"+token, userID, sessionTTL).Err()
+}
+
+func (s *sessions) get(ctx context.Context, token string) (int64, error) {
+	return s.rdb.Get(ctx, "session:"+token).Int64()
+}
+
+func (s *sessions) delete(ctx context.Context, token string) error {
+	return s.rdb.Del(ctx, "session:"+token).Err()
+}

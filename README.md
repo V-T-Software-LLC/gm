@@ -6,8 +6,9 @@ way we like to start our projects.
 
 gm currently creates two kinds of projects:
 
-- **Web apps**: a Go server with echo, templ, and sqlc, plus a Vite Svelte
-  app with Tailwind for the parts of the page that need to be dynamic.
+- **Web apps**: a Go server with echo, templ, htmx, and sqlc, with users in
+  Postgres and sessions in Redis, plus a Vite Svelte app with Tailwind for the
+  parts of the page that need to be dynamic.
 - **Low level projects**: C or C++ libraries and applications built with
   CMake, or C projects built with a basic Makefile.
 
@@ -76,7 +77,11 @@ These need to be installed when you run `gm create`:
 
 - `go`
 - `templ` (`go install github.com/a-h/templ/cmd/templ@latest`)
+- `sqlc` (`go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest`)
 - the package manager you chose (`npm`, `pnpm`, or `bun`)
+
+To run the project you need a Postgres database and a Redis server, and
+`psql` to create the tables with `make db`.
 
 These are optional:
 
@@ -84,7 +89,6 @@ These are optional:
   (`go install github.com/air-verse/air@latest`). If gm finds `air` on your
   `PATH` it writes an `.air.toml` and `make dev` uses it. Without it,
   `make dev` runs the server with `go run` and you restart it yourself.
-- `sqlc` for generating database code (`make sqlc`).
 
 ### What gets created
 
@@ -93,27 +97,67 @@ The project follows the
 
 ```
 demo/
-  cmd/demo/main.go           starts the server, takes a -dev flag
-  internal/server/server.go  echo setup, routes, and a templ render helper
-  internal/db/               schema.sql and queries.sql; sqlc generates here
-  web/app/                   vite + svelte + tailwind project
-  web/static/                vite build output, served at /static
-  web/views/                 templ templates (layout.templ, home.templ)
-  sqlc.yaml                  postgres, pgx/v5
+  cmd/demo/main.go            connects to postgres and redis, starts the server
+  internal/server/server.go   echo setup, routes, and a templ render helper
+  internal/server/auth.go     sign up, sign in, sign out, and requireUser
+  internal/server/session.go  sessions stored in redis
+  internal/db/                schema.sql and queries.sql; sqlc generates here
+  web/app/                    vite + svelte + tailwind project, imports htmx
+  web/static/                 vite build output, served at /static
+  web/views/                  templ templates
+  sqlc.yaml                   postgres, pgx/v5
   Makefile
-  .air.toml                  only when air is installed
+  .env.example                the environment variables the server needs
+  .air.toml                   only when air is installed
   .gitignore
 ```
 
-The server listens on `:8080` and renders the home page at `/`. The home page
-mounts a small Svelte counter component so you can see the whole stack
-working.
+The server listens on `:8080`:
+
+| Route             | What it does                                       |
+| ----------------- | -------------------------------------------------- |
+| `GET /`           | home page with a small Svelte counter component    |
+| `GET /signup`     | sign up page                                       |
+| `POST /signup`    | create a user and a session                        |
+| `GET /signin`     | sign in page                                       |
+| `POST /signin`    | check the password and create a session            |
+| `POST /signout`   | delete the session                                 |
+| `GET /dashboard`  | the signed in user's dashboard                     |
+
+#### Users and sessions
+
+`schema.sql` has a `users` table with first name, last name, email, a bcrypt
+password hash, and created and updated timestamps. Emails are lowercased
+before they are stored, so they are unique regardless of case.
+
+The sign up and sign in forms post with htmx. When a field is wrong the server
+renders the form again with an error, and htmx swaps it in place. On success
+the server creates a session and responds with `HX-Redirect: /dashboard`.
+
+A session is a random token in an `HttpOnly`, `SameSite=Lax` cookie, stored in
+Redis as `session:<token>` with the user id as the value. Sessions last 30
+days. The cookie is `Secure` unless the server runs with `-dev`. To protect a
+route, add the `requireUser` middleware. It redirects to `/signin` when there
+is no session, and otherwise stores the user in the context:
+
+```go
+e.GET("/settings", s.settings, s.requireUser)
+
+user := c.Get("user").(db.User)
+```
 
 ### Developing
 
 ```sh
+cp .env.example .env   # set DATABASE_URL and REDIS_URL
+make db                # create the tables
 make dev
 ```
+
+The Makefile loads `.env` and exports it, so `make dev` and `make run` pass
+the variables to the server. When running the binary yourself, set them in
+the environment. `make db` runs `schema.sql`, which only creates tables that
+do not exist yet, so it is safe to run again after adding a table.
 
 This runs two things in parallel:
 
@@ -153,11 +197,11 @@ relative path.
 | `make generate` | `templ generate`                                |
 | `make web`      | `vite build`                                    |
 | `make sqlc`     | `sqlc generate`                                 |
+| `make db`       | run `schema.sql` against `DATABASE_URL`         |
 | `make clean`    | remove `bin`, `tmp`, and `web/static`           |
 
-`schema.sql` and `queries.sql` start out with only comments. Add a table and
-a query before running `make sqlc`, since sqlc fails when there are no
-queries.
+After changing `schema.sql` or `queries.sql`, run `make sqlc` to regenerate
+the code in `internal/db`.
 
 ## Low level projects
 

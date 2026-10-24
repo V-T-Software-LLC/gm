@@ -24,13 +24,18 @@ func TestWriteFiles(t *testing.T) {
 			}
 
 			contains := map[string]string{
-				"cmd/demo/main.go":          `"example.com/demo/internal/server"`,
-				"internal/server/server.go": `"example.com/demo/web/views"`,
-				"Makefile":                  "PM := pnpm",
-				"web/views/layout.templ":    "if Dev {",
-				"web/app/vite.config.js":    "outDir: '../static'",
-				".gitignore":                "bin/",
-				"sqlc.yaml":                 `out: "internal/db"`,
+				"cmd/demo/main.go":           `"example.com/demo/internal/server"`,
+				"internal/server/server.go":  `"example.com/demo/web/views"`,
+				"Makefile":                   "PM := pnpm",
+				"web/views/layout.templ":     "if Dev {",
+				"web/app/vite.config.js":     "outDir: '../static'",
+				".gitignore":                 "bin/",
+				"sqlc.yaml":                  `out: "internal/db"`,
+				"internal/server/auth.go":    `"example.com/demo/internal/db"`,
+				"internal/server/session.go": "session:",
+				"internal/db/schema.sql":     "password_hash text not null",
+				"web/views/dashboard.templ":  `import "example.com/demo/internal/db"`,
+				".env.example":               "localhost:5432/demo",
 			}
 			if air {
 				contains[".air.toml"] = `cmd = "go build -o ./tmp/main ./cmd/demo"`
