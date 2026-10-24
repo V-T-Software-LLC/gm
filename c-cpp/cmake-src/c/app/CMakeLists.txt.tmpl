@@ -1,0 +1,8 @@
+include(ConfigureCopts)
+include(helpers)
+
+{{.Name}}_add_executable(
+    NAME {{.Name}}
+    SRCS main.c
+    COPTS ${${PROJECT_NAME}_DEFAULT_COPTS}
+)

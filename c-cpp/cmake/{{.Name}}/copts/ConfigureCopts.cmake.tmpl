@@ -1,0 +1,35 @@
+include(GENERATED_{{.Name}}Copts)
+
+# C files get the *_FLAGS. C++ files get the *_FLAGS and the *_CXX_FLAGS.
+# Tests are C++ and get the *_TEST_FLAGS, which include the C++ flags.
+
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "GCC")
+    set(_C_COPTS "${${PROJECT_NAME}_GCC_FLAGS}")
+elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+    set(_C_COPTS "${${PROJECT_NAME}_LLVM_FLAGS}")
+else()
+    message(WARNING "unknown compiler: ${CMAKE_C_COMPILER}. building with no default flags")
+    set(_C_COPTS "")
+endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "QCC")
+    set(_CXX_COPTS ${${PROJECT_NAME}_GCC_FLAGS} ${${PROJECT_NAME}_GCC_CXX_FLAGS})
+    set({{.Name}}_TEST_COPTS "${${PROJECT_NAME}_GCC_TEST_FLAGS}")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(_CXX_COPTS ${${PROJECT_NAME}_LLVM_FLAGS} ${${PROJECT_NAME}_LLVM_CXX_FLAGS})
+    set({{.Name}}_TEST_COPTS "${${PROJECT_NAME}_LLVM_TEST_FLAGS}")
+else()
+    message(WARNING "unknown compiler: ${CMAKE_CXX_COMPILER}. building with no default flags")
+    set(_CXX_COPTS "")
+    set({{.Name}}_TEST_COPTS "")
+endif()
+
+# each flag gets its own generator expression since a list inside one would
+# be split on its semicolons
+set({{.Name}}_DEFAULT_COPTS "")
+foreach(_FLAG IN LISTS _C_COPTS)
+    list(APPEND {{.Name}}_DEFAULT_COPTS "$<$<COMPILE_LANGUAGE:C>:${_FLAG}>")
+endforeach()
+foreach(_FLAG IN LISTS _CXX_COPTS)
+    list(APPEND {{.Name}}_DEFAULT_COPTS "$<$<COMPILE_LANGUAGE:CXX>:${_FLAG}>")
+endforeach()

@@ -1,0 +1,74 @@
+include(CMakeParseArguments)
+include(GoogleTest)
+
+# {{.Name}}_add_library(NAME <name> [HDRS ...] [SRCS ...] [COPTS ...] [DEPS ...])
+#
+# Creates the target {{.Name}}_<name> with the alias {{.Name}}::<name>.
+# Without SRCS it is an interface (header only) library.
+function({{.Name}}_add_library)
+    cmake_parse_arguments(LIB
+        ""
+        "NAME"
+        "HDRS;SRCS;COPTS;DEPS"
+        ${ARGN}
+    )
+    set(_NAME "{{.Name}}_${LIB_NAME}")
+    if (LIB_SRCS)
+        add_library(${_NAME} "")
+        target_sources(${_NAME} PRIVATE ${LIB_SRCS} ${LIB_HDRS})
+        target_compile_options(${_NAME} PRIVATE ${LIB_COPTS})
+        target_include_directories(${_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+        target_link_libraries(${_NAME} PUBLIC ${LIB_DEPS})
+    else()
+        add_library(${_NAME} INTERFACE)
+        target_sources(${_NAME} INTERFACE ${LIB_HDRS})
+        target_include_directories(${_NAME} INTERFACE ${PROJECT_SOURCE_DIR})
+        target_link_libraries(${_NAME} INTERFACE ${LIB_DEPS})
+    endif()
+    add_library({{.Name}}::${LIB_NAME} ALIAS ${_NAME})
+endfunction()
+
+# {{.Name}}_add_executable(NAME <name> SRCS ... [COPTS ...] [DEPS ...])
+function({{.Name}}_add_executable)
+    cmake_parse_arguments(EXE
+        ""
+        "NAME"
+        "SRCS;COPTS;DEPS"
+        ${ARGN}
+    )
+    add_executable(${EXE_NAME} "")
+    target_sources(${EXE_NAME} PRIVATE ${EXE_SRCS})
+    target_compile_options(${EXE_NAME} PRIVATE ${EXE_COPTS})
+    target_include_directories(${EXE_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
+    target_link_libraries(${EXE_NAME} PRIVATE ${EXE_DEPS})
+endfunction()
+
+# {{.Name}}_add_test(NAME <name> SRCS ... [COPTS ...] [DEPS ...])
+#
+# Requires include(DownloadGoogleTest).
+function({{.Name}}_add_test)
+    cmake_parse_arguments(TEST
+        ""
+        "NAME"
+        "SRCS;COPTS;DEPS"
+        ${ARGN}
+    )
+    set(_NAME "{{.Name}}_${TEST_NAME}")
+    add_executable("${_NAME}" "")
+    target_sources(${_NAME} PRIVATE ${TEST_SRCS})
+    target_compile_options(${_NAME}
+        PRIVATE ${TEST_COPTS}
+    )
+    target_compile_options(${_NAME}
+        PRIVATE "-g"
+    )
+    target_include_directories(${_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
+    target_link_libraries(${_NAME} PUBLIC ${TEST_DEPS})
+    target_link_libraries(${_NAME}
+        PUBLIC
+        GTest::gtest_main
+        GTest::gmock_main
+    )
+    gtest_discover_tests(${_NAME}
+        DISCOVERY_MODE PRE_TEST)
+endfunction()

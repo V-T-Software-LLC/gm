@@ -1,0 +1,14 @@
+#ifndef {{upper .Name}}_{{upper .Name}}_H_
+#define {{upper .Name}}_{{upper .Name}}_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int {{.Name}}_add(int a, int b);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // {{upper .Name}}_{{upper .Name}}_H_

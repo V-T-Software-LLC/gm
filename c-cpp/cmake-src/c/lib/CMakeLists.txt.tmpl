@@ -1,0 +1,17 @@
+include(ConfigureCopts)
+include(DownloadGoogleTest)
+include(helpers)
+
+{{.Name}}_add_library(
+    NAME {{.Name}}
+    HDRS {{.Name}}.h
+    SRCS {{.Name}}.c
+    COPTS ${${PROJECT_NAME}_DEFAULT_COPTS}
+)
+
+{{.Name}}_add_test(
+    NAME test
+    SRCS {{.Name}}_test.cc
+    COPTS ${${PROJECT_NAME}_TEST_COPTS}
+    DEPS {{.Name}}::{{.Name}}
+)

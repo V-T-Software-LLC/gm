@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
+	ccpp "github.com/V-T-Software-LLC/gm/c-cpp"
 	"github.com/V-T-Software-LLC/gm/webapp"
 )
 
@@ -61,6 +62,8 @@ var createCmd = &cobra.Command{
 		switch p.Type {
 		case WebApp:
 			return createWebApp(p.Name)
+		case LowLevel:
+			return createLowLevel(p.Name)
 		default:
 			return fmt.Errorf("%s projects are not supported yet", p.Type)
 		}
@@ -95,6 +98,62 @@ func createWebApp(name string) error {
 	}
 
 	return webapp.Create(o)
+}
+
+func createLowLevel(name string) error {
+	if err := ccpp.ValidateName(name); err != nil {
+		return err
+	}
+
+	o := ccpp.Options{Name: name, Language: "c"}
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Build system").
+				Options(
+					huh.NewOption("CMake", "cmake"),
+					huh.NewOption("Makefile (C only)", "make"),
+				).
+				Value(&o.Build),
+		),
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Language").
+				Options(
+					huh.NewOption("C", "c"),
+					huh.NewOption("C++", "cpp"),
+				).
+				Value(&o.Language),
+		).WithHideFunc(func() bool { return o.Build == "make" }),
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Library or application").
+				Options(
+					huh.NewOption("Library", "lib"),
+					huh.NewOption("Application", "app"),
+				).
+				Value(&o.Kind),
+		),
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Compiler").
+				Options(
+					huh.NewOption("Clang", "clang"),
+					huh.NewOption("GCC", "gcc"),
+				).
+				Value(&o.Compiler),
+		),
+	)
+
+	if err := form.Run(); err != nil {
+		return err
+	}
+	if o.Build == "make" {
+		o.Language = "c"
+	}
+
+	return ccpp.Create(o)
 }
 
 func init() {

@@ -1,0 +1,20 @@
+"""Generates GENERATED_{{.Name}}Copts.cmake from copts.py.
+
+Run this after changing copts.py.
+"""
+
+import os
+
+from copts import COPTS_VARS
+
+out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "GENERATED_{{.Name}}Copts.cmake")
+
+with open(out, "w") as f:
+    f.write("# GENERATED! DO NOT MANUALLY EDIT THIS FILE.\n")
+    f.write("# (1) Edit copts.py\n")
+    f.write("# (2) Run `python3 generate_copts.py`\n\n")
+    for name, flags in sorted(COPTS_VARS.items()):
+        f.write("list(APPEND %s\n" % name)
+        for flag in flags:
+            f.write('    "%s"\n' % flag)
+        f.write(")\n\n")
