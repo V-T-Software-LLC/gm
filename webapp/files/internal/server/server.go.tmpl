@@ -1,0 +1,29 @@
+package server
+
+import (
+	"github.com/a-h/templ"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
+
+	"{{.Module}}/web/views"
+)
+
+func New(dev bool) *echo.Echo {
+	views.Dev = dev
+
+	e := echo.New()
+	e.Use(middleware.RequestLogger())
+	e.Use(middleware.Recover())
+
+	e.Static("/static", "web/static")
+	e.GET("/", func(c *echo.Context) error {
+		return render(c, views.Home())
+	})
+
+	return e
+}
+
+func render(c *echo.Context, t templ.Component) error {
+	c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
+	return t.Render(c.Request().Context(), c.Response())
+}

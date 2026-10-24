@@ -1,0 +1,18 @@
+package main
+
+import (
+	"flag"
+	"log/slog"
+
+	"{{.Module}}/internal/server"
+)
+
+func main() {
+	dev := flag.Bool("dev", false, "load scripts from the vite dev server")
+	flag.Parse()
+
+	e := server.New(*dev)
+	if err := e.Start(":8080"); err != nil {
+		slog.Error("failed to start server", "error", err)
+	}
+}

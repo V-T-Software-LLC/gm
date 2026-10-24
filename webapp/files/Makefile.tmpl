@@ -1,0 +1,36 @@
+NAME := {{.Name}}
+PM := {{.PackageManager}}
+
+.PHONY: build generate web sqlc run dev dev-go dev-web clean
+
+build: generate web
+	go build -o bin/$(NAME) ./cmd/$(NAME)
+
+generate:
+	templ generate
+
+web:
+	cd web/app && $(PM) run build
+
+sqlc:
+	sqlc generate
+
+run: build
+	./bin/$(NAME)
+
+dev:
+	$(MAKE) -j2 dev-go dev-web
+
+dev-go:
+{{- if .Air}}
+	air
+{{- else}}
+	templ generate
+	go run ./cmd/$(NAME) -dev
+{{- end}}
+
+dev-web:
+	cd web/app && $(PM) run dev
+
+clean:
+	rm -rf bin tmp web/static
