@@ -45,6 +45,7 @@ var makeFiles = []string{
 	".clang-format",
 	".gitignore",
 	"Makefile",
+	"foo/Makefile",
 }
 
 func TestWriteFiles(t *testing.T) {
@@ -86,14 +87,15 @@ func TestWriteFiles(t *testing.T) {
 			o:     Options{Build: "make", Language: "c", Kind: "lib", Compiler: "gcc"},
 			files: append([]string{"foo/foo.c", "foo/foo.h"}, makeFiles...),
 			contains: map[string]string{
-				"Makefile": "CC=gcc\n",
+				"Makefile":     "$(MAKE) -C foo $@",
+				"foo/Makefile": "CC=gcc\n",
 			},
 		},
 		{
 			o:     Options{Build: "make", Language: "c", Kind: "app", Compiler: "clang"},
 			files: append([]string{"foo/main.c"}, makeFiles...),
 			contains: map[string]string{
-				"Makefile": "BIN_NAME=build/foo\n",
+				"foo/Makefile": "BIN_NAME=foo\n",
 			},
 		},
 	}

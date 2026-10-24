@@ -16,6 +16,15 @@ gm currently creates two kinds of projects:
 gm needs Go 1.23 or newer.
 
 ```sh
+go install github.com/V-T-Software-LLC/gm@latest
+```
+
+This installs `gm` into `$(go env GOPATH)/bin`, which should be on your
+`PATH`.
+
+To build from source instead:
+
+```sh
 git clone git@github.com:V-T-Software-LLC/gm.git gm
 cd gm
 make build        # builds bin/gm
@@ -264,7 +273,8 @@ compilers later, change the two `set(CMAKE_*_COMPILER ...)` lines in the root
 
 ```
 foo/
-  Makefile
+  Makefile                   forwards every target to foo/Makefile
+  foo/Makefile               the real build
   foo/foo.c, foo/foo.h       library sources
   foo/main.c                 application entry point
   .clang-format
@@ -272,13 +282,14 @@ foo/
 ```
 
 ```sh
-make            # builds build/foo or build/libfoo.a
+make            # builds foo/foo or foo/libfoo.a
 make clean
 ```
 
-The Makefile sets `CC` to the compiler you chose. `make CC=...` overrides it,
-and `make OPTIMIZATION=-O0` changes the optimization level. Makefile projects
-do not include tests.
+The root Makefile runs `$(MAKE) -C foo <target>`, so every target and variable
+passes through to `foo/Makefile`. That Makefile sets `CC` to the compiler you
+chose. `make CC=...` overrides it, and `make OPTIMIZATION=-O0` changes the
+optimization level. Makefile projects do not include tests.
 
 ## Contributing
 

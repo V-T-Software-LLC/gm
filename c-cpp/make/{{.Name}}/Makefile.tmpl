@@ -1,0 +1,52 @@
+CC={{.CC}}
+OPTIMIZATION?=-O3
+
+WARN=-Wall -Wextra -Wno-missing-field-initializers -Wstrict-prototypes -pedantic
+STD=-std=c11
+OPT=$(OPTIMIZATION) -fno-omit-frame-pointer
+DEBUG=-g -ggdb
+LIBS=-lm
+
+{{.Name}}_CFLAGS= $(STD) $(WARN) $(OPT) $(DEBUG) -I..
+
+CCCOLOR="\033[34m"
+LINKCOLOR="\033[34;1m"
+SRCCOLOR="\033[33m"
+BINCOLOR="\033[37;1m"
+MAKECOLOR="\033[32;1m"
+ENDCOLOR="\033[0m"
+
+QUIET_CC = @printf '    %b %b\n' $(CCCOLOR)CC$(ENDCOLOR) $(SRCCOLOR)$@$(ENDCOLOR) 1>&2;
+QUIET_LINK = @printf '    %b %b\n' $(LINKCOLOR)LINK$(ENDCOLOR) $(BINCOLOR)$@$(ENDCOLOR) 1>&2;
+
+{{.Name}}_CC=$(QUIET_CC)$(CC) $({{.Name}}_CFLAGS)
+{{- if eq .Kind "lib"}}
+{{.Name}}_AR=$(QUIET_LINK)$(AR) rcs
+
+BIN_NAME=lib{{.Name}}.a
+{{.Name}}_OBJ={{.Name}}.o
+{{- else}}
+{{.Name}}_LD=$(QUIET_LINK)$(CC)
+
+BIN_NAME={{.Name}}
+{{.Name}}_OBJ=main.o
+{{- end}}
+
+ALL_SOURCES=$(sort $(patsubst %.o,%.c,$({{.Name}}_OBJ)))
+
+.PHONY: all
+all: $(BIN_NAME)
+
+$(BIN_NAME): $({{.Name}}_OBJ)
+{{- if eq .Kind "lib"}}
+	$({{.Name}}_AR) $@ $^
+{{- else}}
+	$({{.Name}}_LD) -o $@ $^ $(LIBS)
+{{- end}}
+
+%.o: %.c
+	$({{.Name}}_CC) -o $@ -c $<
+
+.PHONY: clean
+clean:
+	rm -rf $(BIN_NAME) $({{.Name}}_OBJ)

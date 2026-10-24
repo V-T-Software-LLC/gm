@@ -77,7 +77,7 @@ func Create(o Options) error {
 		fmt.Println("  make")
 	case o.Build == "make":
 		fmt.Println("  make")
-		fmt.Printf("  ./build/%s\n", o.Name)
+		fmt.Printf("  ./%s/%s\n", o.Name, o.Name)
 	case o.Kind == "lib":
 		fmt.Println("  cmake -B build")
 		fmt.Println("  cmake --build build")
