@@ -16,7 +16,7 @@ gm currently creates two kinds of projects:
 gm needs Go 1.23 or newer.
 
 ```sh
-git clone <repo url> gm
+git clone git@github.com:V-T-Software-LLC/gm.git gm
 cd gm
 make build        # builds bin/gm
 ```
