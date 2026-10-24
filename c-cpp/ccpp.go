@@ -19,6 +19,11 @@ import (
 //go:embed all:cmake cmake-src all:make src
 var files embed.FS
 
+// written to the root of every project
+//
+//go:embed .clang-format
+var clangFormat []byte
+
 type Options struct {
 	Name     string
 	Build    string // "cmake" or "make"
@@ -103,5 +108,5 @@ func writeFiles(o Options) error {
 			return err
 		}
 	}
-	return nil
+	return os.WriteFile(filepath.Join(o.Name, ".clang-format"), clangFormat, 0o644)
 }
