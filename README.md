@@ -80,8 +80,9 @@ These need to be installed when you run `gm create`:
 - `sqlc` (`go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest`)
 - the package manager you chose (`npm`, `pnpm`, or `bun`)
 
-To run the project you need a Postgres database and a Redis server, and
-`psql` to create the tables with `make db`.
+To run the project you need a Postgres database, a Redis server, and
+[goose](https://github.com/pressly/goose) to run migrations
+(`go install github.com/pressly/goose/v3/cmd/goose@latest`).
 
 These are optional:
 
@@ -101,7 +102,8 @@ demo/
   internal/server/server.go   echo setup, routes, and a templ render helper
   internal/server/auth.go     sign up, sign in, sign out, and requireUser
   internal/server/session.go  sessions stored in redis
-  internal/db/                schema.sql and queries.sql; sqlc generates here
+  internal/db/migrations/     goose migrations, which sqlc reads as the schema
+  internal/db/                queries.sql; sqlc generates here
   web/app/                    vite + svelte + tailwind project, imports htmx
   web/static/                 vite build output, served at /static
   web/views/                  templ templates
@@ -126,7 +128,7 @@ The server listens on `:8080`:
 
 #### Users and sessions
 
-`schema.sql` has a `users` table with first name, last name, email, a bcrypt
+The first migration creates a `users` table with first name, last name, email, a bcrypt
 password hash, and created and updated timestamps. Emails are lowercased
 before they are stored, so they are unique regardless of case.
 
@@ -150,14 +152,13 @@ user := c.Get("user").(db.User)
 
 ```sh
 cp .env.example .env   # set DATABASE_URL and REDIS_URL
-make db                # create the tables
+make migrate           # create the tables
 make dev
 ```
 
-The Makefile loads `.env` and exports it, so `make dev` and `make run` pass
-the variables to the server. When running the binary yourself, set them in
-the environment. `make db` runs `schema.sql`, which only creates tables that
-do not exist yet, so it is safe to run again after adding a table.
+The Makefile loads `.env` and exports it, so `make dev`, `make run`, and
+`make migrate` get the variables. When running the binary yourself, set them
+in the environment.
 
 This runs two things in parallel:
 
@@ -197,11 +198,28 @@ relative path.
 | `make generate` | `templ generate`                                |
 | `make web`      | `vite build`                                    |
 | `make sqlc`     | `sqlc generate`                                 |
-| `make db`       | run `schema.sql` against `DATABASE_URL`         |
+| `make migrate`  | `goose up` against `DATABASE_URL`               |
+| `make migration name=...` | create the next numbered migration    |
 | `make clean`    | remove `bin`, `tmp`, and `web/static`           |
 
-After changing `schema.sql` or `queries.sql`, run `make sqlc` to regenerate
-the code in `internal/db`.
+#### Migrations
+
+Migrations live in `internal/db/migrations` and are numbered in order:
+
+```sh
+make migration name=add_posts   # writes 00002_add_posts.sql
+```
+
+Fill in the `-- +goose Up` and `-- +goose Down` sections, then run
+`make migrate` to apply it and `make sqlc` to regenerate the code in
+`internal/db`. sqlc reads the migrations as the schema and skips the down
+sections. To roll back the last migration, run goose yourself:
+
+```sh
+goose -dir internal/db/migrations postgres "$DATABASE_URL" down
+```
+
+Run `make sqlc` after changing `queries.sql` too.
 
 ## Low level projects
 

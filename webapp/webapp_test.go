@@ -30,12 +30,12 @@ func TestWriteFiles(t *testing.T) {
 				"web/views/layout.templ":     "if Dev {",
 				"web/app/vite.config.js":     "outDir: '../static'",
 				".gitignore":                 "bin/",
-				"sqlc.yaml":                  `out: "internal/db"`,
+				"sqlc.yaml":                  `schema: "internal/db/migrations"`,
 				"internal/server/auth.go":    `"example.com/demo/internal/db"`,
 				"internal/server/session.go": "session:",
-				"internal/db/schema.sql":     "password_hash text not null",
-				"web/views/dashboard.templ":  `import "example.com/demo/internal/db"`,
-				".env.example":               "localhost:5432/demo",
+				"internal/db/migrations/00001_create_users.sql": "-- +goose Up",
+				"web/views/dashboard.templ":                     `import "example.com/demo/internal/db"`,
+				".env.example":                                  "localhost:5432/demo",
 			}
 			if air {
 				contains[".air.toml"] = `cmd = "go build -o ./tmp/main ./cmd/demo"`

@@ -74,7 +74,7 @@ func Create(o Options) error {
 	fmt.Printf("\nCreated %s. To start developing:\n\n", o.Name)
 	fmt.Printf("  cd %s\n", o.Name)
 	fmt.Println("  cp .env.example .env    # then edit the values")
-	fmt.Println("  make db")
+	fmt.Println("  make migrate")
 	fmt.Println("  make dev")
 	fmt.Println("\nThen open http://localhost:8080")
 	if !o.Air {
