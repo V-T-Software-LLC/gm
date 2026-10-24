@@ -1,0 +1,115 @@
+{{.Name}}_GCC_FLAGS = [
+        "-Wall",
+        "-Wextra",
+        "-Wcast-qual",
+        "-Wconversion-null",
+        "-Wformat-security",
+        "-Wmissing-declarations",
+        "-Wnon-virtual-dtor",
+        "-Woverlength-strings",
+        "-Wpointer-arith",
+        "-Wundef",
+        "-Wunused-local-typedefs",
+        "-Wunused-result",
+        "-Wvarargs",
+        "-Wvla",  # variable-length array
+        "-Wwrite-strings",
+        # Don't define min and max macros (Build on Windows using gcc)
+        "-DNOMINMAX",
+        ]
+
+{{.Name}}_GCC_TEST_ADDITIONAL_FLAGS = [
+        "-Wall",
+        "-Wextra",
+        "-Wcast-qual",
+        "-Wconversion-null",
+        "-Wformat-security",
+        "-Wmissing-declarations",
+        "-Wnon-virtual-dtor",
+        "-Woverlength-strings",
+        "-Wpointer-arith",
+        "-Wundef",
+        "-Wunused-local-typedefs",
+        "-Wunused-result",
+        "-Wvarargs",
+        "-Wvla",  # variable-length array
+        "-Wwrite-strings",
+        # Don't define min and max macros (Build on Windows using gcc)
+        "-DNOMINMAX",
+        ]
+
+{{.Name}}_LLVM_BASE_FLAGS = [
+        "-Wmost",
+        "-Wextra",
+        "-Wc++98-compat-extra-semi",
+        "-Wcast-qual",
+        "-Wconversion",
+        "-Wdeprecated-pragma",
+        "-Wfloat-overflow-conversion",
+        "-Wfloat-zero-conversion",
+        "-Wfor-loop-analysis",
+        "-Wformat-security",
+        "-Wgnu-redeclared-enum",
+        "-Winfinite-recursion",
+        "-Winvalid-constexpr",
+        "-Wliteral-conversion",
+        "-Wmissing-declarations",
+        "-Wnullability-completeness",
+        "-Woverlength-strings",
+        "-Wpointer-arith",
+        "-Wself-assign",
+        "-Wshadow-all",
+        "-Wshorten-64-to-32",
+        "-Wsign-conversion",
+        "-Wstring-conversion",
+        "-Wtautological-overlap-compare",
+        "-Wtautological-unsigned-zero-compare",
+        "-Wthread-safety",
+        "-Wundef",
+        "-Wuninitialized",
+        "-Wunreachable-code",
+        "-Wunused-comparison",
+        "-Wunused-local-typedefs",
+        "-Wunused-result",
+        "-Wvla",
+        "-Wwrite-strings",
+        "-Wno-float-conversion",
+        "-Wno-implicit-float-conversion",
+        "-Wno-implicit-int-float-conversion",
+        "-Wno-unknown-warning-option",
+        "-Wno-unused-command-line-argument",
+        "-DNOMINMAX",
+        ]
+
+{{.Name}}_LLVM_FLAGS = ["-Wall"] + {{.Name}}_LLVM_BASE_FLAGS
+
+{{.Name}}_LLVM_TEST_ADDITIONAL_FLAGS = [
+        "-Wno-deprecated-declarations",
+        "-Wno-implicit-int-conversion",
+        "-Wno-missing-prototypes",
+        "-Wno-missing-variable-declarations",
+        "-Wno-nullability-completeness",
+        "-Wno-shadow",
+        "-Wno-shorten-64-to-32",
+        "-Wno-sign-compare",
+        "-Wno-sign-conversion",
+        "-Wno-unreachable-code-loop-increment",
+        "-Wno-unused-function",
+        "-Wno-unused-member-function",
+        "-Wno-unused-parameter",
+        "-Wno-unused-private-field",
+        "-Wno-unused-template",
+        "-Wno-used-but-marked-unused",
+        "-Wno-gnu-zero-variadic-macro-arguments",
+        ]
+
+def gcc_style_filter_and_combine(default_flags, test_flags):
+    remove = set(["-W" + f[5:] for f in test_flags if f[:5] == "-Wno-"])
+    return [f for f in default_flags if f not in remove] + test_flags
+
+COPTS_VARS = {
+        "{{.Name}}_GCC_FLAGS": {{.Name}}_GCC_FLAGS,
+        "{{.Name}}_GCC_TEST_FLAGS": gcc_style_filter_and_combine({{.Name}}_GCC_FLAGS, {{.Name}}_GCC_TEST_ADDITIONAL_FLAGS),
+        "{{.Name}}_LLVM_FLAGS": {{.Name}}_LLVM_FLAGS,
+        "{{.Name}}_LLVM_TEST_FLAGS": gcc_style_filter_and_combine({{.Name}}_LLVM_FLAGS, {{.Name}}_LLVM_TEST_ADDITIONAL_FLAGS),
+        }
