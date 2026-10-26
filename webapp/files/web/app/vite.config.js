@@ -10,7 +10,6 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     origin: 'http://localhost:5173',
-    cors: { origin: 'http://localhost:8080' },
   },
   build: {
     outDir: '../static',

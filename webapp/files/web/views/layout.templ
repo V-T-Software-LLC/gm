@@ -12,6 +12,7 @@ templ Layout(title string) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
+			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js" integrity="sha384-2OatzQy1H+Zd/IIrjr1TcuDGqLXeHhbooAyJY1KdQMKnr4LZ22k31GBLdYKHmVjg" crossorigin="anonymous"></script>
 			if Dev {
 				<script type="module" src={ viteURL + "/@vite/client" }></script>
 				<script type="module" src={ viteURL + "/src/main.js" }></script>

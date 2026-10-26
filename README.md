@@ -104,7 +104,7 @@ demo/
   internal/server/session.go  sessions stored in redis
   internal/db/migrations/     goose migrations, which sqlc reads as the schema
   internal/db/                queries.sql; sqlc generates here
-  web/app/                    vite + svelte + tailwind project, imports htmx
+  web/app/                    vite + svelte + tailwind project
   web/static/                 vite build output, served at /static
   web/views/                  templ templates
   sqlc.yaml                   postgres, pgx/v5

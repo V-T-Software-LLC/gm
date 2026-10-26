@@ -53,7 +53,6 @@ func Create(o Options) error {
 		{Title: "Creating vite svelte app", Fn: func() error { return createVite(o.Name, pm, create) }},
 		{Title: "Writing project files", Fn: func() error { return writeFiles(o) }},
 		{Title: "Installing tailwind", Fn: func() error { return scaffold.Run(web, pm, add...) }},
-		{Title: "Installing htmx", Fn: func() error { return scaffold.Run(web, pm, add[0], "htmx.org@2") }},
 		{Title: "Installing go packages", Fn: func() error {
 			return scaffold.Run(o.Name, "go", "get",
 				"github.com/labstack/echo/v5",
