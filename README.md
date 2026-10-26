@@ -71,6 +71,7 @@ Created demo. To start developing:
 - **Go module name**: passed to `go mod init`, for example
   `github.com/you/demo`.
 - **JavaScript package manager**: npm, pnpm, or bun.
+- **Language**: JavaScript or TypeScript for the Svelte app.
 
 ### Requirements
 
@@ -170,7 +171,7 @@ This runs two things in parallel:
 
 Open http://localhost:8080. In development the Go server does not serve any
 JavaScript or CSS. With `-dev`, the layout loads `@vite/client` and
-`src/main.js` straight from the Vite dev server, so Svelte and Tailwind
+`src/main.js` (or `src/main.ts`) straight from the Vite dev server, so Svelte and Tailwind
 changes show up immediately with hot reload. This follows Vite's
 [backend integration guide](https://vite.dev/guide/backend-integration).
 

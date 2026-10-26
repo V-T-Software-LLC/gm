@@ -84,6 +84,15 @@ func createWebApp(name string) error {
 				Options(huh.NewOptions("npm", "pnpm", "bun")...).
 				Value(&o.PackageManager),
 		),
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Language").
+				Options(
+					huh.NewOption("JavaScript", "js"),
+					huh.NewOption("TypeScript", "ts"),
+				).
+				Value(&o.Lang),
+		),
 	)
 
 	if err := form.Run(); err != nil {

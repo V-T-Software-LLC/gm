@@ -15,7 +15,7 @@ func TestWriteFiles(t *testing.T) {
 		}
 		t.Run(name, func(t *testing.T) {
 			chdir(t, t.TempDir())
-			o := Options{Name: "demo", Module: "example.com/demo", PackageManager: "pnpm", Air: air}
+			o := Options{Name: "demo", Module: "example.com/demo", PackageManager: "pnpm", Lang: "ts", Air: air}
 			if err := os.Mkdir(o.Name, 0o755); err != nil {
 				t.Fatal(err)
 			}
@@ -24,15 +24,17 @@ func TestWriteFiles(t *testing.T) {
 			}
 
 			contains := map[string]string{
-				"cmd/demo/main.go":           `"example.com/demo/internal/server"`,
-				"internal/server/server.go":  `"example.com/demo/web/views"`,
-				"Makefile":                   "PM := pnpm",
-				"web/views/layout.templ":     "if Dev {",
-				"web/app/vite.config.js":     "outDir: '../static'",
-				".gitignore":                 "bin/",
-				"sqlc.yaml":                  `schema: "internal/db/migrations"`,
-				"internal/server/auth.go":    `"example.com/demo/internal/db"`,
-				"internal/server/session.go": "session:",
+				"cmd/demo/main.go":                              `"example.com/demo/internal/server"`,
+				"internal/server/server.go":                     `"example.com/demo/web/views"`,
+				"Makefile":                                      "PM := pnpm",
+				"web/views/layout.templ":                        `viteURL + "/src/main.ts"`,
+				"web/app/vite.config.ts":                        "input: ['src/main.ts', 'src/app.css']",
+				"web/app/src/main.ts":                           "mount(App, { target })",
+				"web/app/src/App.svelte":                        `<script lang="ts">`,
+				".gitignore":                                    "bin/",
+				"sqlc.yaml":                                     `schema: "internal/db/migrations"`,
+				"internal/server/auth.go":                       `"example.com/demo/internal/db"`,
+				"internal/server/session.go":                    "session:",
 				"internal/db/migrations/00001_create_users.sql": "-- +goose Up",
 				"web/views/dashboard.templ":                     `import "example.com/demo/internal/db"`,
 				".env.example":                                  "localhost:5432/demo",

@@ -23,6 +23,7 @@ type Options struct {
 	Name           string
 	Module         string
 	PackageManager string
+	Lang           string // js or ts
 	Air            bool
 }
 
@@ -40,10 +41,14 @@ func Create(o Options) error {
 
 	pm := o.PackageManager
 	web := filepath.Join(o.Name, "web", "app")
-	create := []string{"create", "vite", "web/app", "--template", "svelte", "--no-interactive"}
+	template := "svelte"
+	if o.Lang == "ts" {
+		template = "svelte-ts"
+	}
+	create := []string{"create", "vite", "web/app", "--template", template, "--no-interactive"}
 	add := []string{"add", "-D", "tailwindcss", "@tailwindcss/vite"}
 	if pm == "npm" {
-		create = []string{"create", "vite@latest", "web/app", "--", "--template", "svelte", "--no-interactive"}
+		create = []string{"create", "vite@latest", "web/app", "--", "--template", template, "--no-interactive"}
 		add[0] = "install"
 	}
 
