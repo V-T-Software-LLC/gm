@@ -38,6 +38,7 @@ install it into your Go bin directory.
 
 ```sh
 gm create
+gm version        # prints the installed version
 ```
 
 gm asks one question at a time. Every project starts with:
