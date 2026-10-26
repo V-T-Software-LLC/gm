@@ -14,10 +14,11 @@ templ Layout(title string) {
 			<title>{ title }</title>
 			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js" integrity="sha384-2OatzQy1H+Zd/IIrjr1TcuDGqLXeHhbooAyJY1KdQMKnr4LZ22k31GBLdYKHmVjg" crossorigin="anonymous"></script>
 			if Dev {
+				<link rel="stylesheet" href={ viteURL + "/src/app.css" }/>
 				<script type="module" src={ viteURL + "/@vite/client" }></script>
 				<script type="module" src={ viteURL + "/src/main.js" }></script>
 			} else {
-				<link rel="stylesheet" href="/static/main.css"/>
+				<link rel="stylesheet" href="/static/app.css"/>
 				<script type="module" src="/static/main.js"></script>
 			}
 		</head>

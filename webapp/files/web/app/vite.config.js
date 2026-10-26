@@ -15,7 +15,7 @@ export default defineConfig({
     outDir: '../static',
     emptyOutDir: true,
     rolldownOptions: {
-      input: 'src/main.js',
+      input: ['src/main.js', 'src/app.css'],
       output: {
         entryFileNames: '[name].js',
         assetFileNames: '[name][extname]',

@@ -184,7 +184,7 @@ make build        # templ generate, vite build, go build -o bin/demo
 ```
 
 `vite build` writes to `web/static` with fixed file names (`main.js` and
-`main.css`), so the layout links them directly and there is no manifest to
+`app.css`), so the layout links them directly and there is no manifest to
 read. Run the binary from the project root since it serves `web/static` by
 relative path.
 
